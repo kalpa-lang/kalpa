@@ -1,2 +1,7 @@
 /kalpa
 *.dSYM
+/build.ninja
+/.ninja_deps
+/.ninja_log
+*.o
+*.o.d

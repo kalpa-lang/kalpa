@@ -20,7 +20,7 @@ NINJA_TEMPLATE = \
     command = {cxx} {cxxflags} -c $in -o $out
 
 rule link
-    command = {ld} {ldflags} $in -o $out
+    command = {ld} $in ${ldflags} -o $out
 
 {body}
 default kalpa

@@ -4,6 +4,8 @@ set -e
 
 CXX=c++
 
+$CXX --version
+
 FMT_LDFLAGS="$(pkg-config --libs fmt)"
 FMT_CFLAGS="$(pkg-config --cflags fmt)"
 

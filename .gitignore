@@ -5,3 +5,4 @@
 /.ninja_log
 *.o
 *.o.d
+.vscode/

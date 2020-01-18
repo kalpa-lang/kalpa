@@ -5,10 +5,15 @@
 #include <string_view>
 #include <variant>
 
+#include "defs.h"
+
 namespace klp {
 struct Token {
-    enum class Class {
+    enum class Type {  // TODO add bit operations and lambdas
         Identifier,
+
+        Indent,
+        Dedent,
 
         LeftParen,
         RightParen,
@@ -25,49 +30,78 @@ struct Token {
 
         For,
         While,
+
         If,
         Else,
         Elif,
+
+        In,
+
+        Not,
+        Or,
+        And,
+
+        Return,
+
+        Int,
+        Float,
+        String,
         
         Assign,
 
         Equal,
         NotEqual,
         Less,
+        LessEq,
         Greater,
+        GreaterEq,
         
         Add,
         Sub,
         Mul,
+        Pow,
         Div,
         IntDiv,
 
         AddEq,
         SubEq,
         MulEq,
+        PowEq,
         DivEq,
         IntDivEq,
+
+        Xor,
+
+        XorEq,
 
         LeftBracket,
         RightBracket,
 
         LeftBrace,
         RightBrace,
+
+        Eof
     };
 
-    std::variant<std::string, std::string_view> string_value;
-
-    Token(Class);
-    Token(Class, std::string);
-    Token(Class, std::string_view);
+    Type type;
+    u32 offset;
+    std::variant<std::string, std::string_view, i64, double> value;
 };
 
 
 class Tokenizer {
 public:
-    Tokenizer(std::string_view code);
+    Tokenizer(std::string_view source);
     
     Token next();
+
+private:
+    std::string_view source;
+    u32 offset = 0;
+    u32 indent_level = 0;
+    u32 dedent_counder = 0;
+
+    void trim(u32 trim_size);
 };
 }
 

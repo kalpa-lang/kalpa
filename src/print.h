@@ -16,7 +16,7 @@ using fmt::format;
 using fmt::print;
 
 
-static void eputs(const char* msg) {
+inline void eputs(const char* msg) {
     fmt::print(stderr, "{}\n", msg);
 }
 

@@ -22,6 +22,10 @@ using i64 = std::int64_t;
 using isize = std::intptr_t;
 
 
+[[noreturn]]
+void todo(const char* msg = nullptr);
+
+
 }
 
 

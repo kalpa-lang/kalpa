@@ -35,6 +35,11 @@ std::optional<std::vector<char>> read_file(const char* path) {
         return ret;
     }
 
+    if (file_size == 0) {
+        ret.emplace();
+        return ret;
+    }
+
     if (std::fseek(file, 0, SEEK_SET) < 0) {
         print_file_error(path);
         return ret;

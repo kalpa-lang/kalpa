@@ -118,7 +118,7 @@ Token Tokenizer::next() {
 
         if (source[token_size] != '.') {  // result is an integer
             trim(token_size);
-             Token{ Token::Type::Int, token_offset, int_value };
+            Token{ Token::Type::Int, token_offset, int_value };
         } else {  // result is a float
             ++token_size;
             double float_value = 0;

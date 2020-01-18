@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 CXX=c++
 
 FMT_LDFLAGS="$(pkg-config --libs fmt)"

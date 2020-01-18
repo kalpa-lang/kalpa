@@ -4,6 +4,8 @@
 #include <optional>
 #include <vector>
 
+#include "defs.h"
+#include "tokenizer.h"
 #include "print.h"
 
 
@@ -62,12 +64,25 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    const auto source = read_file(argv[1]);
+    auto source = read_file(argv[1]);
     if (!source) {
         return 1;
     }
 
-    print("source size: {}\n", source->size());
+    source->push_back('\0');
+    std::string_view s(source->data(), source->size());
+    Tokenizer tokenizer(s);
+
+    while (true) {
+        auto token = tokenizer.next();
+        if (token.type == Token::Type::Eof) {
+            break;
+        }
+
+        std::visit([] (auto& x) {
+            print("{}\n", x);
+        }, token.value);
+    }
 
     return 0;
 }

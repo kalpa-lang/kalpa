@@ -46,7 +46,7 @@ struct Token {
         Int,
         Float,
         String,
-        
+
         Assign,
 
         Equal,
@@ -55,7 +55,7 @@ struct Token {
         LessEq,
         Greater,
         GreaterEq,
-        
+
         Add,
         Sub,
         Mul,
@@ -91,8 +91,8 @@ struct Token {
 
 class Tokenizer {
 public:
-    Tokenizer(std::string_view source);
-    
+    Tokenizer(std::string_view source) : source(source) {}
+
     Token next();
 
 private:

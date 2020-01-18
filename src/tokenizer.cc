@@ -16,7 +16,7 @@ void Tokenizer::trim(u32 trim_size) {
 Token Tokenizer::next() {
     if (dedent_counder) {
         --dedent_counder;
-        return Token{ Token::Type::Dedent, offset };
+        return Token{ .type = Token::Type::Dedent, .offset = offset };
     }
 
     trim(std::min(source.find_first_not_of(' '), source.size()));
@@ -171,7 +171,7 @@ Token Tokenizer::next() {
     if (last_char == '"') {
         ++token_size;
         std::string value;
-        
+
         while (token_size < source.size() && source[token_size] != '"') {
             last_char = source[token_size++];
             if (last_char == '\\') {

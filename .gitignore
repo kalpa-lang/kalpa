@@ -1,2 +1,3 @@
 /kalpa
 *.dSYM
+.vscode/

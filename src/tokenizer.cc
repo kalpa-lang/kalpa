@@ -16,6 +16,7 @@ void Tokenizer::trim(u32 trim_size) {
 Token Tokenizer::next() {
     if (dedent_counder) {
         --dedent_counder;
+        --indent_level;
         return Token{ .type = Token::Type::Dedent, .offset = offset };
     }
 
@@ -101,7 +102,7 @@ Token Tokenizer::next() {
             } else if (current_indent == indent_level) {
                 return next();
             } else if (current_indent < indent_level) {
-                dedent_counder = indent_level - current_indent - 1;
+                dedent_counder = (--indent_level) - current_indent;
                 return Token{ Token::Type::Dedent, offset };
             } else {
                 todo();

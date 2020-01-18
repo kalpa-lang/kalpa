@@ -1,10 +1,16 @@
-f a =
-    let b = 42
-    g x =
-        return 2 * x
-    return a * b
-
-
 def f x y =
     let t = x
+    var a = y
+    a += 1
+    return t * a
+
+
+def fac n =
+    if n == 1:
+        return 1
+    else:
+        return n * fac (n - 1)
+
+
+class Foo:
 

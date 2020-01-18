@@ -1,3 +1,13 @@
 #!/bin/sh
+
 CXX=c++
-$CXX -Wall -Wextra -std=c++17 -O0 -g src/*.cc -o kalpa
+
+FMT_LDFLAGS="$(pkg-config --libs fmt)"
+FMT_CFLAGS="$(pkg-config --cflags fmt)"
+
+$CXX \
+    -std=c++17 \
+    -Wall -Wextra \
+    -O0 -g \
+    $FMT_LDFLAGS $FMT_CFLAGS \
+    src/*.cc -o kalpa

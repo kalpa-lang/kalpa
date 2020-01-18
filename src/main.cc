@@ -1,6 +1,6 @@
-#include <cstdio>
+#include <fmt/format.h>
 
 
 int main() {
-    std::puts("Hello, World!");
+    fmt::print(FMT_STRING("Hello, {}!"), "World");
 }

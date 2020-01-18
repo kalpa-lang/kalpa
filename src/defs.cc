@@ -11,9 +11,9 @@ namespace klp {
 
 void todo(const char* msg) {
     if (msg) {
-        eprint("Error: not implemented!\n");
-    } else {
         eprint("Error: not implemented: {}\n", msg);
+    } else {
+        eprint("Error: not implemented!\n");
     }
 
     std::fflush(stdout);

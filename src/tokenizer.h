@@ -102,6 +102,7 @@ private:
     u32 dedent_counder = 0;
 
     void trim(u32 trim_size);
+    Token handle_eof();
 };
 }
 

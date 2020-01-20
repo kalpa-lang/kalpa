@@ -11,18 +11,29 @@ void Tokenizer::trim(u32 trim_size) {
     offset += trim_size;
 }
 
-// TODO fix eof issues in iteration
+Token Tokenizer::handle_eof() {  // Returns an Eof token or a Dedent token if indentation level != 0
+    if (indent_level) {
+        --indent_level;
+        return Token{Token::Type::Dedent, offset};
+    } else {
+        return Token{Token::Type::Eof, offset};
+    }
+}
+
+// TODO Token construction gives warnings
+// TODO dedent/indent offset is not calculated correctly
+// TODO test for possible eof issues
 // TODO add tokenization error handling
 Token Tokenizer::next() {
     if (dedent_counder) {
         --dedent_counder;
-        return Token{ .type = Token::Type::Dedent, .offset = offset };
+        --indent_level;
+        return handle_eof();
     }
 
     trim(std::min(source.find_first_not_of(' '), source.size()));
-
     if (source.empty()) {
-        return Token{ Token::Type::Eof, offset };
+        return handle_eof();
     }
 
     u32 token_offset = offset;
@@ -30,10 +41,14 @@ Token Tokenizer::next() {
     char last_char = source[0];
 
     if (last_char == '#') {
-        while (token_size < source.size() && source[token_size] != '\n' && source[token_size] != 0) {
+        while (token_size < source.size() && source[token_size] != '\n') {
             ++token_size;
         }
         trim(token_size);
+        if (source.empty()) {
+            return handle_eof();
+        }
+
         last_char = source[0];
         token_size = 0;
     }
@@ -42,8 +57,34 @@ Token Tokenizer::next() {
         todo();
     }
 
+    while (last_char == '\n') {
+        trim(1);
+        u32 num_zeros = std::min(source.find_first_not_of(' '), source.size());
+        trim(num_zeros);
+        if (source.empty()) {
+            return handle_eof();
+        } else if ((last_char = source[0]) != '\n') {
+            if (num_zeros % 4 != 0) {
+                todo();
+            }
+
+            u32 current_indent_level = num_zeros / 4;
+            if (current_indent_level > indent_level) {
+                if (current_indent_level - indent_level == 1) {
+                    indent_level = current_indent_level;
+                    return Token{Token::Type::Indent, offset};
+                } else {
+                    todo();
+                }
+            } else if (current_indent_level < indent_level) {
+                dedent_counder = (--indent_level) - current_indent_level;
+                return Token{Token::Type::Dedent, offset};
+            }
+        }
+    }
+
     if (std::isalpha(last_char)) {
-        while (std::isalnum(source[token_size])) {
+        while (token_size < source.size() && std::isalnum(source[token_size])) {
             last_char = source[token_size++];
         }
         std::string_view token = source.substr(0, token_size);
@@ -80,50 +121,21 @@ Token Tokenizer::next() {
         }
     }
 
-    if (last_char == '\n') {  // TODO check if offset is correct
-        trim(1);
-        u32 num_zeros = std::min(source.find_first_not_of(' '), source.size());
-        trim(num_zeros);
-        if (source[0] == '\n') {
-            return next();
-        }
-        else if (source[0] == 0) {
-            return Token{ Token::Type::Eof, offset };
-        } else {
-            if (num_zeros % 4 != 0) {
-                todo();
-            }
-
-            u32 current_indent = num_zeros / 4;
-            if (current_indent - indent_level == 1) {
-                indent_level = current_indent;
-                return Token{ Token::Type::Indent, offset };
-            } else if (current_indent == indent_level) {
-                return next();
-            } else if (current_indent < indent_level) {
-                dedent_counder = indent_level - current_indent - 1;
-                return Token{ Token::Type::Dedent, offset };
-            } else {
-                todo();
-            }
-        }
-    }
-
     if (std::isdigit(last_char)) {  // TODO make the solution prettier
         i64 int_value = 0;
-        while (std::isdigit(source[token_size])) {
+        while (token_size < source.size() && std::isdigit(source[token_size])) {
             last_char = source[token_size++];
             int_value = int_value * 10 + (last_char - '0');
         }
 
         if (source[token_size] != '.') {  // result is an integer
             trim(token_size);
-            Token{ Token::Type::Int, token_offset, int_value };
+            return Token{ Token::Type::Int, token_offset, int_value };
         } else {  // result is a float
             ++token_size;
             double float_value = 0;
             double pos_multiplicator = 1;
-            while (std::isdigit(source[token_size])) {
+            while (token_size < source.size() && std::isdigit(source[token_size])) {
                 last_char = source[token_size++];
                 float_value += (pos_multiplicator /= 10) * (last_char - '0');
             }
@@ -156,7 +168,7 @@ Token Tokenizer::next() {
         if (source.size() > 1 && std::isdigit(source[++token_size])) {
             double float_value = 0;
             double pos_multiplicator = 1;
-            while (std::isdigit(source[token_size])) {
+            while (token_size < source.size() && std::isdigit(source[token_size])) {
                 last_char = source[token_size++];
                 float_value += (pos_multiplicator /= 10) * (last_char - '0');
             }

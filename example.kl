@@ -1,6 +1,6 @@
 def f x y =
     let t = x
-    var a = y
+    let a = y
     a += 1
     return t * a
 

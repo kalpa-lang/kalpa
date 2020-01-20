@@ -9,7 +9,7 @@ import sys
 
 
 DEFAULT_CXX="c++"
-DEFAULT_CXXFLAGS_COMMON = "-Wall -Wextra -std=c++17"
+DEFAULT_CXXFLAGS_COMMON = "-Wall -Wextra -std=c++17 -fPIC"
 DEFAULT_CXXFLAGS_DEBUG = "-O0 -g"
 DEFAULT_CXXFLAGS_RELEASE = "-O3 -flto"
 DEFAULT_DEPFLAGS = "-MMD -MF $out.d"

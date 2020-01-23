@@ -4,13 +4,14 @@ import argparse
 import glob as glob_lib
 import os
 from pathlib import Path
+import shlex
 import subprocess
 import sys
 
 
 DEFAULT_CXX="c++"
-DEFAULT_CXXFLAGS_COMMON = "-Wall -Wextra -std=c++17 -fPIC"
-DEFAULT_CXXFLAGS_DEBUG = "-O0 -g"
+DEFAULT_CXXFLAGS_COMMON = "-Wall -Wextra -std=c++17 -I{root}/src -fPIC"
+DEFAULT_CXXFLAGS_DEBUG = "-O0 -g -DKALPA_DEBUG"
 DEFAULT_CXXFLAGS_RELEASE = "-O3 -flto"
 DEFAULT_DEPFLAGS = "-MMD -MF $out.d"
 
@@ -50,25 +51,26 @@ def main():
     else:
         cxxflags = args.cxxflags
 
+    cxxflags = cxxflags.format(root=shlex.quote(str(root)))
     cxxflags += " " + pkg_config("fmt", "cflags")
 
     ldflags = args.ldflags or cxxflags
     ldflags += " " + pkg_config("fmt", "libs")
 
-    objects = []
-    object_dsts = []
+    kalpa_objs, kalpa_dsts = make_objects(root, "src")
+    kalpa_lib_dsts = [dst for dst in kalpa_dsts if dst.name != "main.o"]
+    kalpa = make_exec(root, "kalpa", kalpa_dsts)
 
-    for src_path in glob(root / "src" / "*.cc"):
-        obj, dst = make_object(root, src_path)
-        objects.append(obj)
-        object_dsts.append(dst)
-
-    kalpa = make_exec(root, "kalpa", object_dsts)
+    test_objs, test_dsts = make_objects(root, "tests")
+    test_exec = make_exec(root, "tests/run", kalpa_lib_dsts + test_dsts)
 
     ninja = NINJA_TEMPLATE.format(
         cxx=args.cxx, cxxflags=cxxflags + " " + args.depflags,
         ld=args.ld, ldflags=ldflags,
-        body="".join(objects + ["\n", kalpa]),
+        body="".join(
+            kalpa_objs + [kalpa, "\n"] +
+            test_objs + [test_exec]
+        ),
     )
 
     with open("build.ninja", "w") as ninja_file:
@@ -132,6 +134,18 @@ def glob(path):
         path = str(path)
 
     return [*map(Path, glob_lib.glob(path))]
+
+
+def make_objects(root, path):
+    objs = []
+    dsts = []
+
+    for src in glob(root / path / "*.cc"):
+        obj, dst = make_object(root, src)
+        objs.append(obj)
+        dsts.append(dst)
+
+    return objs, dsts
 
 
 def make_object(root, path):

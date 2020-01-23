@@ -5,6 +5,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "print.h"
+
 
 namespace klp {
 
@@ -22,8 +24,24 @@ using i64 = std::int64_t;
 using isize = std::intptr_t;
 
 
+void verify(bool cond, const char* msg = nullptr);
+
+template <typename T, typename U>
+void verify_eq(const T& x, const U& y) {
+    if (x != y) {
+        eprint("Condition violated: {} == {}\n", x, y);
+        verify(false);
+    }
+}
+
 [[noreturn]]
 void todo(const char* msg = nullptr);
+
+
+#define KALPA_DO_STRINGIFY(s) #s
+#define KALPA_STRINGIFY(s) KALPA_DO_STRINGIFY(s)
+
+#define KALPA_VERIFY(cond) verify(cond, KALPA_STRINGIFY(cond))
 
 
 }

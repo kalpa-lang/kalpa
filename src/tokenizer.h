@@ -99,7 +99,7 @@ private:
     std::string_view source;
     u32 offset = 0;
     u32 indent_level = 0;
-    u32 dedent_counder = 0;
+    u32 dedent_counter = 0;
 
     void trim(u32 trim_size);
     Token handle_eof();

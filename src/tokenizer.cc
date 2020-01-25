@@ -25,8 +25,8 @@ Token Tokenizer::handle_eof() {  // Returns an Eof token or a Dedent token if in
 // TODO test for possible eof issues
 // TODO add tokenization error handling
 Token Tokenizer::next() {
-    if (dedent_counder) {
-        --dedent_counder;
+    if (dedent_counter) {
+        --dedent_counter;
         --indent_level;
         return handle_eof();
     }
@@ -77,7 +77,7 @@ Token Tokenizer::next() {
                     todo();
                 }
             } else if (current_indent_level < indent_level) {
-                dedent_counder = (--indent_level) - current_indent_level;
+                dedent_counter = (--indent_level) - current_indent_level;
                 return Token{Token::Type::Dedent, offset};
             }
         }

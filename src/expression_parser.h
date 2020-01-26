@@ -22,6 +22,7 @@ public:
     void add_middle_child(const Token& oper, Node* child);
 
     bool is_value() const;
+    bool is_unary_operator() const;
 
     int get_priority() const;
 

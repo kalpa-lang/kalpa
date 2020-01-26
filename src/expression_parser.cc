@@ -19,6 +19,10 @@ bool Node::is_value() const {
     return children.empty();
 }
 
+bool Node::is_unary_operator() const {
+    return !is_value() && children[0] == nullptr;
+}
+
 int get_operator_priority(const Token& token);
 
 std::string Node::to_string() const {
@@ -164,12 +168,15 @@ Node* parse_expression(Tokenizer& tokenizer) {
         while (!available_expression_parts.empty()
                 && available_expression_parts.back()->get_priority()
                 > get_operator_priority(cur_token, cur_identifier)) {
+            if (cur_identifier == nullptr)
+                return nullptr;
             Node* cur_rhs = cur_identifier;
             cur_identifier = available_expression_parts.back();
             cur_identifier->add_last_child(cur_rhs);
             available_expression_parts.pop_back();
         }
         if (!available_expression_parts.empty()
+            && !available_expression_parts.back()->is_unary_operator()
             && available_expression_parts.back()->get_priority()
                 == get_operator_priority(cur_token, cur_identifier)) {
             available_expression_parts.back()->add_middle_child(

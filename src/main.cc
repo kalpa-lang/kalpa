@@ -3,6 +3,7 @@
 #include <cstring>
 #include <optional>
 #include <vector>
+#include <iostream>
 
 #include "defs.h"
 #include "tokenizer.h"
@@ -58,13 +59,13 @@ std::optional<std::vector<char>> read_file(const char* path) {
     return ret;
 }
 
-void print_token(Token& token) {
+void print_token(const Token& token) {
     switch (token.type) {
-        case Token::Type::Identifier            : eputs("Identifier"); break;
-        case Token::Type::Indent                : eputs("Indent"); break;
-        case Token::Type::Dedent                : eputs("Dedent"); break;
-        case Token::Type::LeftParen             : eputs("LeftParen"); break;
-        case Token::Type::RightParen            : eputs("RightParen"); break;
+        case Token::Type::Identifier    : eputs("Identifier"); break;
+        case Token::Type::Indent        : eputs("Indent"); break;
+        case Token::Type::Dedent        : eputs("Dedent"); break;
+        case Token::Type::LeftParen     : eputs("LeftParen"); break;
+        case Token::Type::RightParen    : eputs("RightParen"); break;
         case Token::Type::Colon         : eputs("Colon"); break;
         case Token::Type::Comma         : eputs("Comma"); break;
         case Token::Type::Dot           : eputs("Dot"); break;
@@ -80,35 +81,35 @@ void print_token(Token& token) {
         case Token::Type::Not           : eputs("Not"); break;
         case Token::Type::Or            : eputs("Or"); break;
         case Token::Type::And           : eputs("And"); break;
-        case Token::Type::Return                : eputs("Return"); break;
+        case Token::Type::Return        : eputs("Return"); break;
         case Token::Type::Int           : eputs("Int"); break;
         case Token::Type::Float         : eputs("Float"); break;
-        case Token::Type::String                : eputs("String"); break;
-        case Token::Type::Assign                : eputs("Assign"); break;
+        case Token::Type::String        : eputs("String"); break;
+        case Token::Type::Assign        : eputs("Assign"); break;
         case Token::Type::Equal         : eputs("Equal"); break;
-        case Token::Type::NotEqual              : eputs("NotEqual"); break;
+        case Token::Type::NotEqual      : eputs("NotEqual"); break;
         case Token::Type::Less          : eputs("Less"); break;
-        case Token::Type::LessEq                : eputs("LessEq"); break;
-        case Token::Type::Greater               : eputs("Greater"); break;
-        case Token::Type::GreaterEq             : eputs("GreaterEq"); break;
+        case Token::Type::LessEq        : eputs("LessEq"); break;
+        case Token::Type::Greater       : eputs("Greater"); break;
+        case Token::Type::GreaterEq     : eputs("GreaterEq"); break;
         case Token::Type::Add           : eputs("Add"); break;
         case Token::Type::Sub           : eputs("Sub"); break;
         case Token::Type::Mul           : eputs("Mul"); break;
         case Token::Type::Pow           : eputs("Pow"); break;
         case Token::Type::Div           : eputs("Div"); break;
-        case Token::Type::IntDiv                : eputs("IntDiv"); break;
+        case Token::Type::IntDiv        : eputs("IntDiv"); break;
         case Token::Type::AddEq         : eputs("AddEq"); break;
         case Token::Type::SubEq         : eputs("SubEq"); break;
         case Token::Type::MulEq         : eputs("MulEq"); break;
         case Token::Type::PowEq         : eputs("PowEq"); break;
         case Token::Type::DivEq         : eputs("DivEq"); break;
-        case Token::Type::IntDivEq              : eputs("IntDivEq"); break;
+        case Token::Type::IntDivEq      : eputs("IntDivEq"); break;
         case Token::Type::Xor           : eputs("Xor"); break;
         case Token::Type::XorEq         : eputs("XorEq"); break;
-        case Token::Type::LeftBracket           : eputs("LeftBracket"); break;
-        case Token::Type::RightBracket          : eputs("RightBracket"); break;
-        case Token::Type::LeftBrace             : eputs("LeftBrace"); break;
-        case Token::Type::RightBrace            : eputs("RightBrace"); break;
+        case Token::Type::LeftBracket   : eputs("LeftBracket"); break;
+        case Token::Type::RightBracket  : eputs("RightBracket"); break;
+        case Token::Type::LeftBrace     : eputs("LeftBrace"); break;
+        case Token::Type::RightBrace    : eputs("RightBrace"); break;
         case Token::Type::Eof           : eputs("Eof"); break;
     }
 }
@@ -124,11 +125,16 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    source->push_back('\0');
+    std::variant<int, std::string> x = 27;
+    // source->push_back('\0');
     std::string_view s(source->data(), source->size());
     Tokenizer tokenizer(s);
     Node* tree = parse_expression(tokenizer);
-    print(tree->to_string());
+    if (tree == nullptr) {
+        eputs("Invalid expression");
+    } else {
+        print(tree->to_string() + '\n');
+    }
 
     return 0;
 }

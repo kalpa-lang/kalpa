@@ -6,7 +6,6 @@
 
 #include "defs.h"
 #include "hashmap.h"
-#include "print.h"
 
 namespace klp {
 void Tokenizer::trim(u32 trim_size) {

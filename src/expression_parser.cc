@@ -31,7 +31,7 @@ std::string Node::to_string() const {
         result += children[0]->to_string();
     }
     for (size_t i = 0; i < operators.size(); ++i) {
-        result += format(" {} ", get_operator_priority(operators[i]));
+        result += format(" {} ", get_priority());
         result += children[i + 1]->to_string();
     }
     result += ")";
@@ -91,7 +91,7 @@ int get_binary_operator_priority(const Token& token) {
         case Token::Type::RightParen    : return 18;
         case Token::Type::LeftBrace     : return 18;
         case Token::Type::RightBrace    : return 18;
-        case Token::Type::Identifier    : return 19;
+        // case Token::Type::Identifier    : return 19;
         default                         : return -1;
     }
 }
@@ -100,13 +100,15 @@ bool can_be_binary_operator(const Token& token) {
     return get_binary_operator_priority(token) != -1;
 }
 
-int get_operator_priority(const Token& token) {
-    return std::max(get_binary_operator_priority(token),
-        get_unary_operator_priority(token));
+int get_operator_priority(const Token& token, Node* lhs) {
+    if (lhs == nullptr)
+        return get_unary_operator_priority(token);
+    return get_binary_operator_priority(token);
 }
 
 bool is_operator(const Token& token) {
-    return get_operator_priority(token) != -1;
+    return get_binary_operator_priority(token) != -1
+        || get_unary_operator_priority(token) != -1;
 }
 
 bool is_opening_bracket(const Token& token) {
@@ -114,7 +116,7 @@ bool is_opening_bracket(const Token& token) {
         case Token::Type::LeftParen    : return true;
         case Token::Type::LeftBracket  : return true;
         case Token::Type::LeftBrace    : return true;
-        default                         : return false;
+        default                        : return false;
     }
 }
 
@@ -135,25 +137,9 @@ bool can_be_part_of_rvalue(const Token& token) {
 }
 
 int Node::get_priority() const {
-    if (operators.empty()) return -1;
-    return get_operator_priority(operators[0]);
-}
-
-Node* get_primary_expression(TokenizerView& tokenizer_view) {
-    Token cur_token = tokenizer_view.get_cur_token();
-    if (can_be_unary_operator(cur_token)) {
-        tokenizer_view.move_to_next_token();
-        Node* argument = get_primary_expression(tokenizer_view);
-        if (argument == nullptr)
-            return nullptr;
-        Node* result = new Node();
-        result->add_middle_child(cur_token, argument);
-        return result;
-    }
-    if (cur_token.type != Token::Type::Identifier)
-        return nullptr;
-    tokenizer_view.move_to_next_token();
-    return new Node(cur_token.value);
+    if (operators.empty())
+        return -1;
+    return get_operator_priority(operators[0], children[0]);
 }
 
 Node* parse_expression(Tokenizer& tokenizer) {
@@ -177,7 +163,7 @@ Node* parse_expression(Tokenizer& tokenizer) {
             return nullptr;
         while (!available_expression_parts.empty()
                 && available_expression_parts.back()->get_priority()
-                > get_operator_priority(cur_token)) {
+                > get_operator_priority(cur_token, cur_identifier)) {
             Node* cur_rhs = cur_identifier;
             cur_identifier = available_expression_parts.back();
             cur_identifier->add_last_child(cur_rhs);
@@ -185,7 +171,7 @@ Node* parse_expression(Tokenizer& tokenizer) {
         }
         if (!available_expression_parts.empty()
             && available_expression_parts.back()->get_priority()
-                == get_operator_priority(cur_token)) {
+                == get_operator_priority(cur_token, cur_identifier)) {
             available_expression_parts.back()->add_middle_child(
                 cur_token, cur_identifier);
         } else {
@@ -193,6 +179,7 @@ Node* parse_expression(Tokenizer& tokenizer) {
             current_node->add_middle_child(cur_token, cur_identifier);
             available_expression_parts.push_back(current_node);
         }
+        cur_token = tokenizer_view.move_to_next_token();
     }
     if (available_expression_parts.empty())
         return nullptr;

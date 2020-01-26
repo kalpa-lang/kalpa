@@ -1,5 +1,7 @@
 #include "expression_parser.h"
 
+#include <utility>
+
 #include "defs.h"
 #include "tokenizer.h"
 #include "print.h"
@@ -23,6 +25,11 @@ bool Node::is_unary_operator() const {
     return !is_value() && children[0] == nullptr;
 }
 
+bool Node::is_complete() const {
+    return is_value()
+        || children.size() == operators.size() + 1;
+}
+
 int get_operator_priority(const Token& token);
 
 std::string Node::to_string() const {
@@ -34,9 +41,13 @@ std::string Node::to_string() const {
     if (children[0] != nullptr) {
         result += children[0]->to_string();
     }
+    if (!is_complete()) {
+        return "INCOMPLETE";
+    }
     for (size_t i = 0; i < operators.size(); ++i) {
         result += format(" {} ", get_priority());
-        result += children[i + 1]->to_string();
+        Node* cur_child = children[i + 1];
+        result += cur_child ? cur_child->to_string() : "NULL";
     }
     result += ")";
     return result;
@@ -89,12 +100,6 @@ int get_binary_operator_priority(const Token& token) {
         // case Token::Type::Remainder     : return 10;
         case Token::Type::Pow           : return 13;
         case Token::Type::Dot           : return 14;
-        case Token::Type::LeftBracket   : return 15;
-        case Token::Type::RightBracket  : return 15;
-        case Token::Type::LeftParen     : return 18;
-        case Token::Type::RightParen    : return 18;
-        case Token::Type::LeftBrace     : return 18;
-        case Token::Type::RightBrace    : return 18;
         // case Token::Type::Identifier    : return 19;
         default                         : return -1;
     }
@@ -115,7 +120,7 @@ bool is_operator(const Token& token) {
         || get_unary_operator_priority(token) != -1;
 }
 
-bool is_opening_bracket(const Token& token) {
+bool is_l_bracket(const Token& token) {
     switch(token.type) {
         case Token::Type::LeftParen    : return true;
         case Token::Type::LeftBracket  : return true;
@@ -124,20 +129,34 @@ bool is_opening_bracket(const Token& token) {
     }
 }
 
-bool is_closing_bracket(const Token& token) {
-    switch(token.type) {
-        case Token::Type::RightParen    : return true;
-        case Token::Type::RightBracket  : return true;
-        case Token::Type::RightBrace    : return true;
-        default                         : return false;
-    }
+bool is_r_bracket(const Token& token) {
+    return token.type == Token::Type::RightParen
+        || token.type == Token::Type::RightBracket
+        || token.type == Token::Type::RightBrace;
+}
+
+bool is_l_paren(const Token& token) {
+    return token.type == Token::Type::LeftParen;
+}
+
+bool is_r_paren(const Token& token) {
+    return token.type == Token::Type::RightParen;
+}
+
+bool is_identifier(const Token& token) {
+    return token.type == Token::Type::Identifier;
 }
 
 bool can_be_part_of_rvalue(const Token& token) {
     return is_operator(token)
         || token.type == Token::Type::Identifier
-        || is_opening_bracket(token)
-        || is_closing_bracket(token);
+        || is_l_bracket(token)
+        || is_r_bracket(token);
+}
+
+bool can_be_r_expression_separator(const Token& token) {
+    return is_r_paren(token)
+        || token.type == Token::Type::Comma;
 }
 
 int Node::get_priority() const {
@@ -146,44 +165,67 @@ int Node::get_priority() const {
     return get_operator_priority(operators[0], children[0]);
 }
 
-Node* parse_expression(Tokenizer& tokenizer) {
-    TokenizerView tokenizer_view(tokenizer);
+Node* parse_expression(TokenizerView& tokenizer_view);
+
+std::pair<bool, Node*> parse_element_expression(TokenizerView& tokenizer_view) {
+    Token cur_token = tokenizer_view.get_cur_token();
+    if (!can_be_part_of_rvalue(cur_token))
+        return std::make_pair(false, nullptr);
+    if (is_identifier(cur_token)) {
+        tokenizer_view.move_to_next_token();
+        // TODO: parse function call
+        return std::make_pair(true, new Node(cur_token.value));
+    }
+    // TODO: parse tuple/list/set
+    if (is_l_paren(cur_token)) {
+        tokenizer_view.move_to_next_token();
+        Node* expression = parse_expression(tokenizer_view);
+        cur_token = tokenizer_view.get_cur_token();
+        if (!is_r_paren(cur_token))
+            return std::make_pair(false, nullptr);
+        tokenizer_view.move_to_next_token();
+        return std::make_pair(true, expression);
+    }
+    return std::make_pair(true, nullptr);
+}
+
+Node* parse_expression(TokenizerView& tokenizer_view) {
     std::vector<Node*> available_expression_parts;
     Token cur_token = tokenizer_view.get_cur_token();
     while (can_be_part_of_rvalue(cur_token)) {
         // TODO: parse brackets
-        Node* cur_identifier = nullptr;
-        if (cur_token.type == Token::Type::Identifier) {
-            cur_identifier = new Node(cur_token.value);
-            tokenizer_view.move_to_next_token();
-        }
+        std::pair<bool, Node*> cur_element_parse_res = parse_element_expression(tokenizer_view);
+        if (!cur_element_parse_res.first)
+            return nullptr;
+        Node* cur_element = cur_element_parse_res.second;
         cur_token = tokenizer_view.get_cur_token();
-        if (!can_be_part_of_rvalue(cur_token)) {
-            available_expression_parts.push_back(cur_identifier);
+        if (!can_be_part_of_rvalue(cur_token)
+                || can_be_r_expression_separator(cur_token)) {
+            available_expression_parts.push_back(cur_element);
             break;
         }
-        if (cur_identifier == nullptr
+        if (cur_element == nullptr
                 && !can_be_unary_operator(cur_token))
             return nullptr;
         while (!available_expression_parts.empty()
                 && available_expression_parts.back()->get_priority()
-                > get_operator_priority(cur_token, cur_identifier)) {
-            if (cur_identifier == nullptr)
+                > get_operator_priority(cur_token, cur_element)) {
+            if (cur_element == nullptr)
                 return nullptr;
-            Node* cur_rhs = cur_identifier;
-            cur_identifier = available_expression_parts.back();
-            cur_identifier->add_last_child(cur_rhs);
+            Node* cur_rhs = cur_element;
+            cur_element = available_expression_parts.back();
+            cur_element->add_last_child(cur_rhs);
             available_expression_parts.pop_back();
         }
         if (!available_expression_parts.empty()
             && !available_expression_parts.back()->is_unary_operator()
             && available_expression_parts.back()->get_priority()
-                == get_operator_priority(cur_token, cur_identifier)) {
+                == get_operator_priority(cur_token, cur_element)) {
             available_expression_parts.back()->add_middle_child(
-                cur_token, cur_identifier);
+                cur_token, cur_element);
         } else {
             Node* current_node = new Node();
-            current_node->add_middle_child(cur_token, cur_identifier);
+            current_node->add_middle_child(cur_token, cur_element);
             available_expression_parts.push_back(current_node);
         }
         cur_token = tokenizer_view.move_to_next_token();
@@ -192,12 +234,22 @@ Node* parse_expression(Tokenizer& tokenizer) {
         return nullptr;
     if (available_expression_parts.back() == nullptr)
         return nullptr;
+    if (!available_expression_parts.back()->is_complete())
+        return nullptr;
     while (available_expression_parts.size() != 1) {
         Node* cur_expression_part = available_expression_parts.back();
         available_expression_parts.pop_back();
         available_expression_parts.back()->add_last_child(cur_expression_part);
     }
     return available_expression_parts.back();
+}
+
+Node* parse_expression(Tokenizer& tokenizer) {
+    TokenizerView tokenizer_view(tokenizer);
+    Node* expression_tree = parse_expression(tokenizer_view);
+    return expression_tree;
+    // return can_be_part_of_rvalue(tokenizer_view.get_cur_token())
+    //     ? expression_tree : nullptr;
 }
 
 }

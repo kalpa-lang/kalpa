@@ -23,6 +23,7 @@ public:
 
     bool is_value() const;
     bool is_unary_operator() const;
+    bool is_complete() const;
 
     int get_priority() const;
 

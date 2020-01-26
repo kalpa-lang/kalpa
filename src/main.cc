@@ -7,6 +7,7 @@
 #include "defs.h"
 #include "tokenizer.h"
 #include "print.h"
+#include "hashmap.h"
 
 
 namespace klp {
@@ -118,12 +119,15 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    std::string_view sv(argv[0]);
+    HashMap<std::string, int> m = {{"xyz", 42}};
+    m.find(std::string(sv));
+
     auto source = read_file(argv[1]);
     if (!source) {
         return 1;
     }
 
-    source->push_back('\0');
     std::string_view s(source->data(), source->size());
     Tokenizer tokenizer(s);
 

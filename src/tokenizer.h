@@ -8,6 +8,8 @@
 #include "defs.h"
 
 namespace klp {
+using Value = std::variant<std::string, std::string_view, i64, double>;
+
 struct Token {
     enum class Type {  // TODO add bit operations and lambdas
         Identifier,
@@ -83,9 +85,13 @@ struct Token {
         Eof
     };
 
+    Token(Type type, u32 offset, Value value = Value()) : type(type),
+                                                          offset(offset),
+                                                          value(value) {}
+
     Type type;
     u32 offset;
-    std::variant<std::string, std::string_view, i64, double> value;
+    Value value;
 };
 
 
@@ -100,9 +106,12 @@ private:
     u32 offset = 0;
     u32 indent_level = 0;
     u32 dedent_counder = 0;
+    u32 dedent_offset = 0;
 
     void trim(u32 trim_size);
+    void trim_comment();
     Token handle_eof();
+    Token::Type get_string_token_type(const std::string_view token);
 };
 }
 

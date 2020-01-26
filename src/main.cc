@@ -7,6 +7,7 @@
 #include "defs.h"
 #include "tokenizer.h"
 #include "print.h"
+#include "expression_parser.h"
 
 
 namespace klp {
@@ -126,24 +127,8 @@ int main(int argc, char* argv[]) {
     source->push_back('\0');
     std::string_view s(source->data(), source->size());
     Tokenizer tokenizer(s);
-
-    while (true) {
-        auto token = tokenizer.next();
-        print_token(token);
-        if (token.type == Token::Type::Eof) {
-            break;
-        }
-
-        if (token.type == Token::Type::Identifier ||
-            token.type == Token::Type::String ||
-            token.type == Token::Type::Int ||
-            token.type == Token::Type::Float)
-        std::visit([] (auto& x) {
-            print("{}\n", x);
-        }, token.value);
-
-        eputs("---");
-    }
+    Node* tree = parse_expression(tokenizer);
+    print(tree->to_string());
 
     return 0;
 }

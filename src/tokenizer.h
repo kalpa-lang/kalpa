@@ -8,6 +8,8 @@
 #include "defs.h"
 
 namespace klp {
+using Value = std::variant<std::string, std::string_view, i64, double>;
+
 struct Token {
     enum class Type {  // TODO add bit operations and lambdas
         Identifier,
@@ -85,7 +87,7 @@ struct Token {
 
     Type type;
     u32 offset;
-    std::variant<std::string, std::string_view, i64, double> value;
+    Value value;
 };
 
 

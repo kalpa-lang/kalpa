@@ -119,9 +119,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    std::string_view sv(argv[0]);
-    HashMap<std::string, int> m = {{"xyz", 42}};
-    m.find(std::string(sv));
+    //std::string_view sv(argv[0]);
+    //HashMap<std::string, int> m = {{"xyz", 42}};
+    //m.find(std::string(sv));
 
     auto source = read_file(argv[1]);
     if (!source) {

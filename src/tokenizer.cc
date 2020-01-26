@@ -22,7 +22,7 @@ Token Tokenizer::handle_eof() {  // Returns an Eof token or a Dedent token if in
     }
 }
 
-Token::Type Tokenizer::get_string_token_type(const std::string_view token) {
+Token::Type Tokenizer::get_string_token_type(std::string_view token) {
     const HashMap<std::string, Token::Type> keywords = {
         {"def", Token::Type::Def},
         {"class", Token::Type::Class},
@@ -39,10 +39,7 @@ Token::Type Tokenizer::get_string_token_type(const std::string_view token) {
         {"and", Token::Type::And}
     };
     
-    //std::string tmp;
-    //for (auto c : token) tmp += c;
-    //auto it = keywords.find(tmp);
-    auto it = keywords.find(std::string(token));
+    auto it = keywords.find(std::string(token.data(), token.size()));
     if (it != keywords.end()) {  // token in keywords
         return it->second;
     } else {

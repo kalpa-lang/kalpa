@@ -21,9 +21,23 @@ inline void eputs(const char* msg) {
 }
 
 
-template <typename... Args>
-void eprint(std::string_view format, const Args&... args) {
-    fmt::print(stderr, format, args...);
+template <typename S, typename... Args>
+void println(const S& format, const Args&... args) {
+    print(format, args...);
+    print("\n");
+}
+
+
+template <typename S, typename... Args>
+void eprint(const S& format, const Args&... args) {
+    print(stderr, format, args...);
+}
+
+
+template <typename S, typename... Args>
+void eprintln(const S& format, const Args&... args) {
+    eprint(format, args...);
+    eprint("\n");
 }
 
 

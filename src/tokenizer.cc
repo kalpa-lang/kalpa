@@ -23,7 +23,7 @@ Token Tokenizer::handle_eof() {  // Returns an Eof token or a Dedent token if in
 }
 
 Token::Type Tokenizer::get_string_token_type(std::string_view token) {
-    const HashMap<std::string, Token::Type> keywords = {
+    static const HashMap<std::string, Token::Type> keywords = {
         {"def", Token::Type::Def},
         {"class", Token::Type::Class},
         {"let", Token::Type::Let},
@@ -39,7 +39,7 @@ Token::Type Tokenizer::get_string_token_type(std::string_view token) {
         {"and", Token::Type::And}
     };
     
-    auto it = keywords.find(std::string(token.data(), token.size()));
+    auto it = keywords.find(std::string(token));
     if (it != keywords.end()) {  // token in keywords
         return it->second;
     } else {
@@ -127,21 +127,21 @@ Token Tokenizer::next() {
         }
     }
 
-    if (std::isdigit(last_char)) {
-        i64 int_value = 0;  // Integer part
-        while (token_size < source.size() && std::isdigit(source[token_size])) {  // Expanding integer part
+    if (std::isdigit(last_char)) {  // Number
+        i64 int_value = 0;
+        while (token_size < source.size() && std::isdigit(source[token_size])) {
             last_char = source[token_size++];
             int_value = int_value * 10 + (last_char - '0');
         }
 
-        if (source[token_size] != '.') {  // Result is an integer
+        if (source[token_size] != '.') {  // No dot -> result is an integer
             trim(token_size);
             return Token(Token::Type::Int, token_offset, int_value);
         } else {  // Result is a float
             ++token_size;
-            double float_value = 0;  // Float part
+            double float_value = 0;
             double pos_multiplicator = 1;
-            while (token_size < source.size() && std::isdigit(source[token_size])) {  // Expanding float part
+            while (token_size < source.size() && std::isdigit(source[token_size])) {
                 last_char = source[token_size++];
                 float_value += (pos_multiplicator /= 10) * (last_char - '0');
             }

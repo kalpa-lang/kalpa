@@ -21,7 +21,7 @@ NINJA_TEMPLATE = \
     command = {cxx} {cxxflags} -c $in -o $out
 
 rule link
-    command = {ld} $in ${ldflags} -o $out
+    command = {ld} $in {ldflags} -o $out
 
 {body}
 default kalpa
@@ -40,6 +40,9 @@ def main():
     args = parse_args()
 
     root = Path(args.root or os.path.dirname(__file__))
+
+    cxx = args.cxx
+    ld = args.ld or cxx
 
     if args.cxxflags is None:
         cxxflags = DEFAULT_CXXFLAGS_COMMON
@@ -65,8 +68,8 @@ def main():
     test_exec = make_exec(root, "tests/run", kalpa_lib_dsts + test_dsts)
 
     ninja = NINJA_TEMPLATE.format(
-        cxx=args.cxx, cxxflags=cxxflags + " " + args.depflags,
-        ld=args.ld, ldflags=ldflags,
+        cxx=cxx, cxxflags=cxxflags + " " + args.depflags,
+        ld=ld, ldflags=ldflags,
         body="".join(
             kalpa_objs + [kalpa, "\n"] +
             test_objs + [test_exec]
@@ -113,8 +116,7 @@ def parse_args():
 
     parser.add_argument(
         "-l", "--ld",
-        default=DEFAULT_CXX,
-        help="linker",
+        help="linker, equals cxx by default",
     )
 
     parser.add_argument(

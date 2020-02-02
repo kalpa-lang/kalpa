@@ -84,6 +84,7 @@ public:
             state.b = dist(rd);
             state.c = dist(rd);
             state.d = dist(rd);
+            state.counter = 6615241;
 
             return state;
         }
